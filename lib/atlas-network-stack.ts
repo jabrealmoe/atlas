@@ -12,11 +12,7 @@ export class NetworkStack extends Stack{
     constructor(scope: Construct, id: string, props: NetworkProps) {
         super(scope, id, props)
 
-        const vpc2 = aws_ec2.Vpc.fromLookup(this, 'og-vpc', {
-            vpcName: 'vpc-4ab36432'
-        })
-        console.log('vpcId', vpc2.vpcId)
-        console.log('cidrBlock', vpc2.vpcCidrBlock)
+
         this.vpc = new aws_ec2.Vpc(this, "AtlasVpc",{
             vpcName: "AtlasVpc",
             maxAzs: 2,

@@ -5,8 +5,8 @@ import {NetworkStack} from "../lib/atlas-network-stack";
 import {DatabaseStack} from "../lib/atlas-database-stack";
 
 const app = new cdk.App();
-const acct = "460023120802";
-const region = "us-east-1";
+const acct = process.env.CDK_DEFAULT_ACCOUNT;
+const region = process.env.CDK_DEFAULT_REGION;
 const dbuser = "atlassian"
 
 const network = new NetworkStack(app, "NetworkStack", {
@@ -16,7 +16,7 @@ const network = new NetworkStack(app, "NetworkStack", {
         region: region
     }
 })
-const application = new AtlasStack(app, 'AtlasStack', {vpc: network.vpc, keyName: "jjkeynow", env: { account: `${acct}`, region: `${region}`} });
+const application = new AtlasStack(app, 'AtlasStack', {vpc: network.vpc, keyName: "jjkeynow", domainName: "atlassianfamily.com", env: { account: `${acct}`, region: `${region}`} });
 const database = new DatabaseStack(app, "AtlasDB", {vpc: network.vpc, atlasPet: application.ec2, databaseUser: dbuser, env: {
     account: acct, region: region
     }})

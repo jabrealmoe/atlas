@@ -40,7 +40,46 @@ export class DatabaseStack extends Stack{
             publiclyAccessible: false,
         });
 
+        const confluencedb = new rds.DatabaseInstance(this, 'atlas-pg-db-confluence', {
+            vpc: props.vpc,
+            vpcSubnets: {
+                subnetType: aws_ec2.SubnetType.PRIVATE_ISOLATED,
+            },
+            engine: rds.DatabaseInstanceEngine.postgres({
+                version: rds.PostgresEngineVersion.VER_13_8,
+            }),
+            instanceType: aws_ec2.InstanceType.of(
+                aws_ec2.InstanceClass.BURSTABLE3,
+                aws_ec2.InstanceSize.MEDIUM,
+            ),
+            credentials: rds.Credentials.fromGeneratedSecret(props.databaseUser),
+            multiAz: false,
+
+            allocatedStorage: 1000,
+            maxAllocatedStorage: 1000,
+            allowMajorVersionUpgrade: false,
+            autoMinorVersionUpgrade: true,
+            backupRetention: cdk.Duration.days(0),
+            deleteAutomatedBackups: true,
+            removalPolicy: cdk.RemovalPolicy.DESTROY,
+            deletionProtection: false,
+            databaseName: 'confluence',
+            publiclyAccessible: false,
+        });
+
+        confluencedb.connections.allowFrom(props.atlasPet, aws_ec2.Port.tcp(5432));
         dbInstance.connections.allowFrom(props.atlasPet, aws_ec2.Port.tcp(5432));
+
+
+        new cdk.CfnOutput(this, 'confluenceDbEndpoint', {
+            value: confluencedb.instanceEndpoint.hostname,
+        });
+
+
+        new cdk.CfnOutput(this, 'confluenceSecretName', {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+            value: confluencedb.secret?.secretName!,
+        });
 
         new cdk.CfnOutput(this, 'dbEndpoint', {
             value: dbInstance.instanceEndpoint.hostname,

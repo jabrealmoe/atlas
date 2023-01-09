@@ -1,12 +1,25 @@
-import {aws_ec2, aws_iam, Stack, StackProps} from 'aws-cdk-lib';
+import {
+    aws_ec2,
+    aws_iam,
+    Stack,
+    StackProps,
+    Aws,
+    aws_route53,
+    aws_certificatemanager,
+    aws_cloudfront,
+    RemovalPolicy, aws_route53_targets, aws_cloudwatch
+} from 'aws-cdk-lib';
 import {Construct} from 'constructs';
 import {Effect} from "aws-cdk-lib/aws-iam";
+import * as certificatemgr from '@aws-cdk/aws-certificatemanager';
 import * as fs from 'fs'
+import * as route53 from '@aws-cdk/aws-route53';
 
 
 interface ApplicationProps extends StackProps {
     keyName: string;
     vpc: aws_ec2.Vpc;
+    domainName: string;
 }
 
 export class AtlasStack extends Stack {
@@ -17,7 +30,7 @@ export class AtlasStack extends Stack {
             this,
             "Open888080",
             {
-                securityGroupName: "Open808080",
+                securityGroupName: "Open8080 and 8090 and 80 and 22",
                 vpc: props.vpc
             }
         )
@@ -41,10 +54,75 @@ export class AtlasStack extends Stack {
 
         const rootVolume: aws_ec2.BlockDevice = {
             deviceName: '/dev/xvda', // Use the root device name from Step 1
-            volume: aws_ec2.BlockDeviceVolume.ebs(50), // Override the volume size in Gibibytes (GiB)
+            volume: aws_ec2.BlockDeviceVolume.ebs(30), // Override the volume size in Gibibytes (GiB)
         };
+
+        const coachZone = aws_route53.HostedZone.fromHostedZoneAttributes(this, "hosted-jj", {hostedZoneId: 'Z0419023BX863FBLBVNM', zoneName: 'atlassianfamily.com'})
+        const certificateArn = new aws_certificatemanager.DnsValidatedCertificate(this, `atlassian-family-arn`, {
+            domainName: props.domainName,
+            hostedZone: coachZone,
+            region: Aws.REGION
+        }).certificateArn
+
+
+        const viewcert = aws_cloudfront.ViewerCertificate.fromAcmCertificate({
+            certificateArn,
+            env: {
+                region: Aws.REGION,
+                account: Aws.ACCOUNT_ID,
+            }, node: this.node,
+            stack: this,
+            applyRemovalPolicy(policy: RemovalPolicy): void { },
+            metricDaysToExpiry: () => {
+                return new aws_cloudwatch.Metric({
+                    namespace: "cdk",
+                    metricName: "cdk",
+                })
+            }
+        }, {
+            sslMethod: aws_cloudfront.SSLMethod.SNI,
+            securityPolicy: aws_cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
+            aliases: [props.domainName]
+        })
+
+
+        const distribution = new aws_cloudfront.CloudFrontWebDistribution(this, `atlassianfamily-distribution`, {
+
+            originConfigs: [{
+                customOriginSource: {
+                    domainName: props.domainName,
+                },
+                behaviors: [
+                    {
+
+                        viewerProtocolPolicy: aws_cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+                        allowedMethods: aws_cloudfront.CloudFrontAllowedMethods.GET_HEAD,
+                        compress: true,
+                        isDefaultBehavior: true,
+                    }
+                ]
+            }],
+            viewerCertificate: viewcert,
+            defaultRootObject: "index.html",
+            errorConfigurations: [
+                {
+                    errorCode: 403,
+                    responseCode: 200,
+                    responsePagePath: "/index.html"
+                }
+            ]
+
+        })
+        new aws_route53.ARecord(this, `atlassian-family-arecord`, {
+            recordName: props.domainName,
+
+            zone: coachZone,
+            target: aws_route53.RecordTarget.fromAlias(new aws_route53_targets.CloudFrontTarget(distribution))
+        })
+
+
         this.ec2 = new aws_ec2.Instance(
-            this, "FamilyAtlassianPetEC2", {
+            this, "AtlassianFamilyPetEc2", {
                 instanceName: "AtlassianFamilyPetEc2",
                 blockDevices: [rootVolume],
                 vpc: props.vpc,
@@ -55,7 +133,7 @@ export class AtlasStack extends Stack {
                 },
                 instanceType: aws_ec2.InstanceType.of(
                     aws_ec2.InstanceClass.T2,
-                    aws_ec2.InstanceSize.LARGE
+                    aws_ec2.InstanceSize.XLARGE2
                 ),
                 machineImage: new aws_ec2.AmazonLinuxImage({
                     generation: aws_ec2.AmazonLinuxGeneration.AMAZON_LINUX_2,
