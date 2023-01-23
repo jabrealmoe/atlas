@@ -1,15 +1,10 @@
-# Welcome to your CDK TypeScript project
+# Welcome to an Atlassian Deployment using CDK
 
 You should explore the contents of this project. It demonstrates a CDK app with an instance of a stack (`AtlasStack`)
-which contains an Amazon SQS queue that is subscribed to an Amazon SNS topic.
+which contains an AWS 2 EC2s and 2 AWS RDS instances. This is for a Confluence integration and Jira Data Center implementation (standalone and not clustered)
 
 The `cdk.json` file tells the CDK Toolkit how to execute your app.
 
 ## Useful commands
 
-* `npm run build`   compile typescript to js
-* `npm run watch`   watch for changes and compile
-* `npm run test`    perform the jest unit tests
 * `cdk deploy`      deploy this stack to your default AWS account/region
-* `cdk diff`        compare deployed stack with current state
-* `cdk synth`       emits the synthesized CloudFormation template

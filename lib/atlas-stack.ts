@@ -7,13 +7,14 @@ import {
     aws_route53,
     aws_certificatemanager,
     aws_cloudfront,
-    RemovalPolicy, aws_route53_targets, aws_cloudwatch
+    RemovalPolicy, aws_route53_targets, aws_cloudwatch, aws_elasticloadbalancingv2
 } from 'aws-cdk-lib';
 import {Construct} from 'constructs';
 import {Effect} from "aws-cdk-lib/aws-iam";
 import * as certificatemgr from '@aws-cdk/aws-certificatemanager';
 import * as fs from 'fs'
 import * as route53 from '@aws-cdk/aws-route53';
+import {AutoScalingGroup} from "aws-cdk-lib/aws-autoscaling";
 
 
 interface ApplicationProps extends StackProps {
@@ -84,6 +85,7 @@ export class AtlasStack extends Stack {
             securityPolicy: aws_cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
             aliases: [props.domainName]
         })
+
 
 
         const distribution = new aws_cloudfront.CloudFrontWebDistribution(this, `atlassianfamily-distribution`, {
